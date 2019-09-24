@@ -1,0 +1,28 @@
+##CrossSitRep Codebook
+
+id: Unique participant ID
+group: age group (kids or adults)
+expLabels: experiment name, corresponding to experiment number in manuscript (Exp1, Exp2, or Exp3)
+condition: experimental condition (unstructured, interleaved, massed)
+order: order parameter, indicating training trial list
+set: item set, indicating which set of object-label pairings was used
+gender: participant gender (M/F)
+age: participant age (in years)
+race: participant race/ ethnicity
+engNative: Is the participants' native language English? (yes/ no)
+ole: Does the participants speak languages besides English? (yes/ no)
+parentEd: parents' highest level of education/ degree achieved
+trial_type: trial phase (training or test)
+trial_index: trial number of current trial phase (training: 1-12; test: 1-8)
+image1: image on the left side of the screen
+image2: image on the right side of the screen
+sound1: for training trials, first sound played
+sound2: for training trials, second sound played
+sound: for test trials, name of audio file for word presented
+correct: for test trials, name of correct object image
+selected_image: for test trials, the chosen image
+response_location: for test trials, participant response location (left/ right)
+accuracy: for test trials, is the response correct? (1 = correct, 0 = incorrect)
+firstPres: training trial on which tested item was first presented
+secondPres: second training trial on which tested item was presented
+thirdPres: third training trial on which tested item was presented

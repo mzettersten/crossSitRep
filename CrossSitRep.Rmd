@@ -1,0 +1,669 @@
+---
+title: "Temporal structure and cross-situational word learning"
+output:
+  html_document:
+    code_folding: hide
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+library(ggplot2) # version 3.2.1
+library(tibble)  # version 2.1.3
+library(dplyr)  # version 0.8.3
+library(tidyr)  # version 0.8.3 
+library(stringr) # version 1.4.0
+library(purrr) # version   0.3.2
+library(readr) # version  1.3.1     
+library(forcats) # version 0.4.0
+library(cowplot) # version 1.0.0
+theme_set(theme_cowplot())
+library(lme4) # version 1.1-21
+library(car) # version 3.0-3
+library(sciplot) # version 1.1-1
+library(lmSupport) # version 2.9.13
+library(knitr) # version 1.24
+
+```
+
+Analysis walkthrough for the paper "The temporal structure of naming events differentially affects children’s and adults’ cross-situational word learning" (Benitez, Zettersten & Wojcik, 2019).
+
+See CrossSitRep_codebook for information about individual columns.
+
+## Reading in data and preliminary processing
+
+```{r, message=F, warning=F}
+#### read in complete data set ####
+all_data <- read.csv("CrossSitRep_allData.csv")
+
+#analyze just test trials
+all_data <- filter(all_data,trial_type=="test")
+
+##### KIDS ####
+kids <- filter(all_data,group=="kids")
+
+####Check for Side Bias####
+bias <-  kids %>%
+  group_by(id) %>%
+  summarize(left=sum(length(which(response_location=='left'))))
+bias_list <- bias %>%
+  filter(left>6 | bias$left<2) %>%
+  select(id)
+
+#take out biased kids
+kids <- kids %>%
+  filter(!(id %in% bias_list$id))
+
+#add age group info
+kids$age <- as.numeric(kids$age)
+kids$ageGroup <-  ifelse(kids$age<5,'four',
+                         ifelse(kids$age>=5 & kids$age<6,'five',
+                                ifelse(kids$age>=6 & kids$age<7,'six','seven')))
+
+```
+
+## Demographics {.tabset}
+
+### Children {.tabset}
+
+#### Age, Gender, Native Language
+
+```{r, message=F, warning=F}
+####summarize by subject####
+kids_subj <-  kids %>%
+  group_by(id, group,age,ageGroup, gender,race, ole, parentEd,order, set, condition, expLabels) %>%
+  summarize(accuracy = mean(as.numeric(as.character(accuracy))))
+
+####summarize demographics####
+kids_demographics <-  kids_subj %>%
+  group_by(group,condition) %>%
+  summarize(N=n(), 
+            mean_age = mean(age), 
+            sd_age = sd(age), 
+            min_age = min(age), 
+            max_age = max(age),
+            count_female = length(which(gender=='F')), 
+            language_other_than_english = length(which(ole=='yes')))
+kable(kids_demographics)
+```
+
+#### Ethnicity
+
+```{r, message=F, warning=F}
+kids_race <- kids_subj %>%
+  group_by(group, condition, race) %>%
+  summarize(count=n())
+kable(kids_race)
+```
+
+#### Parental Education
+
+```{r, message=F, warning=F}
+kids_edu <- kids_subj %>%
+  group_by(group, condition, parentEd) %>%
+  summarize(count=n())
+kable(kids_edu)
+```
+
+### Adults {.tabset}
+
+#### Age, Gender, Native Language
+
+```{r, message=F, warning=F}
+####ADULTS####
+adults <- filter(all_data,group=="adults")
+
+####summarize by subject####
+adults_subj <-  adults %>%
+  group_by(id, group,age,gender,ole,engNative,order, set, condition, expLabels) %>%
+  summarize(accuracy = mean(as.numeric(as.character(accuracy))))
+
+####summarize demographics#### 
+adults_demographics <-  adults_subj %>%
+  group_by(group,condition) %>%
+  summarize(N=n(),mean_age = mean(age), sd_age = sd(age), min_age = min(age), max_age = max(age),
+            count_female = length(which(gender=='F')), count_ole = length(which(ole=='Yes')),
+            count_nonNative = length(which(engNative=='No')))
+
+kable(adults_demographics)
+```
+
+## Plotting Test Accuracy {.tabset}
+
+### Children {.tabset}
+
+#### Plotting Test Accuracy by Condition
+
+```{r, message=F}
+####summarize accuracy####
+kids_summarized <-  kids_subj %>%
+  group_by(group,condition) %>%
+  summarize(mean_accuracy = mean(accuracy), N=n(), SD = sd(accuracy), SE = se(accuracy))
+kids_summarized$condition = factor(kids_summarized$condition, levels = c("Unstructured","Interleaved","Massed"))
+
+####plot kids data####
+p1 <- ggplot(kids_summarized,aes(condition,mean_accuracy, color=condition,fill=condition))+
+  geom_bar(stat="identity",alpha=0.1,size=2) +
+  geom_hline(yintercept = 0.50, linetype = 'dashed', size = 0.70)+
+  geom_dotplot(data=kids_subj,aes(y=accuracy),binaxis="y",stackdir="center",dotsize=0.5) +
+  scale_y_continuous(name = "Mean Accuracy",limits=c(0,1)) +
+  scale_x_discrete(name="Condition",
+                   limits=c("Unstructured","Interleaved","Massed"),
+                   labels=c("Unstructured \n Exp1","Interleaved \n Exp2", "Massed \n Exp2")) +
+  geom_errorbar(size=1.5,width=.08, aes(ymin=mean_accuracy-SE,ymax=mean_accuracy+SE))+
+  scale_fill_brewer(name="Condition",
+                    limits=c("Unstructured","Interleaved","Massed"), 
+                    labels=c("Unstructured \n Exp1","Interleaved \n Exp2", "Massed \n Exp2"),
+                    palette="Set1",direction=-1)+
+  scale_color_brewer(name="Condition",
+                     limits=c("Unstructured","Interleaved","Massed"),
+                     labels=c("Unstructured \n Exp1","Interleaved \n Exp2", "Massed \n Exp2"),
+                     palette="Set1",direction=-1)+
+  theme(legend.position="none",
+        axis.text  = element_text(size=18),
+        axis.title = element_text(size=20),
+        plot.title = element_text(size=24))
+p1
+```
+
+#### Relationship between accuracy and age
+
+```{r, message=F}
+#age-related analysis
+kids_subj$conditionName <- factor(kids_subj$condition,levels=c("Unstructured","Interleaved","Massed"),,labels=c("Unstructured\nExp 1","Interleaved\nExp 2","Massed\nExp 2"))
+ggplot(kids_subj,aes(age, accuracy,group=conditionName, color=conditionName))+
+  geom_jitter(width=0.001,height=0.001,size=2)+
+  geom_smooth(method="lm",size=1.5,alpha=0.3)+
+  geom_smooth(aes(group=NULL),color="black",se=F,size=0.8)+
+  scale_color_brewer(name="Condition",
+                     palette="Set1",direction=-1)+
+  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1),limits=c(-0.01,1.01))+
+  theme(legend.position="none",
+        axis.text  = element_text(size=18),
+        axis.title = element_text(size=20),
+        plot.title = element_text(size=24))+
+  geom_hline(yintercept = 0.50, linetype = 'dashed', size = 0.70)+
+  facet_wrap(~conditionName)+
+  xlab("Age (in years)")+
+  ylab("Mean Accuracy")
+```
+
+### Adults {.tabset}
+
+#### Plotting Test Accuracy by Condition
+
+```{r, message=F}
+####summarize accuracy####
+adults_summarized <-  adults_subj %>%
+  group_by(group,condition) %>%
+  summarize(mean_accuracy = mean(accuracy), N=n(), SD = sd(accuracy), SE = se(accuracy))
+adults_summarized$condition = factor(adults_summarized$condition, levels = c("Unstructured","Interleaved","Massed"))
+
+####plot adult data####
+p2 <- ggplot(adults_summarized,aes(condition,mean_accuracy, color=condition,fill=condition))+
+  geom_bar(stat="identity",alpha=0.1,size=2) +
+  geom_hline(yintercept = 0.50, linetype = 'dashed', size = 0.70)+
+  geom_dotplot(data=adults_subj,aes(y=accuracy),binaxis="y",stackdir="center",dotsize=0.5) +
+  scale_y_continuous(name = "Mean Accuracy",limits=c(0,1)) +
+  scale_x_discrete(name="Condition",
+                   limits=c("Unstructured","Interleaved","Massed"), 
+                   labels=c("Unstructured \n Exp3","Interleaved \n Exp3", "Massed \n Exp3")) +
+  geom_errorbar(size=1.5,width=.08, aes(ymin=mean_accuracy-SE,ymax=mean_accuracy+SE))+
+  scale_fill_brewer(name="Condition",
+                    limits=c("Unstructured","Interleaved","Massed"), 
+                    labels=c("Unstructured \n Exp3","Interleaved \n Exp3", "Massed \n Exp3"),
+                    palette="Set1",direction=-1)+
+  scale_color_brewer(name="Condition",
+                     limits=c("Unstructured","Interleaved","Massed"), 
+                     labels=c("Unstructured \n Exp3","Interleaved \n Exp3", "Massed \n Exp3"),
+                     palette="Set1",direction=-1)+
+  theme(legend.position="none",
+        axis.text  = element_text(size=18),
+        axis.title = element_text(size=20),
+        plot.title = element_text(size=24))
+p2
+```
+
+## Results {.tabset}
+
+### Experiment 1 {.tabset}
+
+#### Relationship between age and accuracy
+
+We fit a linear model predicting participant accuracy from age. Below is a summary of the model output.
+
+```{r, message=F, warning=F}
+m <- lm(accuracy~age, data=subset(kids_subj, condition=='Unstructured'))
+summary(m)
+```
+
+#### Overall accuracy
+
+##### Main logistic mixed-effects model
+
+Below is a summary of the logistic mixed-effects model testing children's accuracy against chance.
+
+```{r}
+#test for difference from chance (0.5)
+m <- glmer(accuracy ~ 1 + (1|id)+(1|correct),
+            data=subset(kids, condition=='Unstructured'), family=binomial)
+summary(m)
+```
+
+Below are 95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+
+```{r}
+Anova(m,type="III")
+```
+
+
+##### One-sample t-test against chance
+```{r}
+t.test(filter(kids_subj, condition=='Unstructured')$accuracy, mu=0.5)
+```
+
+### Experiment 2 {.tabset}
+
+#### Relationship between age and accuracy
+
+##### Test for age differences across conditions
+
+First, we tested whether there were any differences in age across condition and experiments.
+
+There were no differences in age across conditon:
+
+```{r}
+m <- lm(age~condition, data=subset(kids_subj, condition!='Unstructured'))
+summary(m)
+```
+
+There were no differences in age across Experiment 1 and 2.
+
+```{r}
+m <- lm(age~expLabels, data=kids_subj)
+summary(m)
+```
+
+##### Linear model predicting accuracy from age
+
+Next, we investigated whether age predicted accuracy in any of the conditions.
+
+We found no evidence that age predicted accuracy in the Interleaved Condition.
+
+```{r, message=F, warning=F}
+m <- lm(accuracy~age, data=subset(kids_subj, condition=='Interleaved'))
+summary(m)
+```
+
+Age also did not predict accuracy in the Massed Condition.
+
+```{r, message=F, warning=F}
+m <- lm(accuracy~age, data=subset(kids_subj, condition=='Massed'))
+summary(m)
+```
+
+Moreover, there was no evidence of an interaction between age and condition
+
+```{r, message=F, warning=F}
+#interaction
+m <- lm(accuracy~age*condition, data=subset(kids_subj, condition!='Unstructured'))
+summary(m)
+```
+
+#### Accuracy in the Interleaved vs. Massed condition
+
+##### Main logistic mixed-effects model with Massed condition as reference level
+
+The model with the maximal random effects structure (by-item and by-subject random intercepts and by-item random slope for condition) did not converge, so we simplified the model by removing the by-item random slope for condition to achieve convergence.
+
+```{r, warning=F, message =F}
+#effect of condition, Massed is reference 
+m <- glmer(accuracy ~ condition + (1|id)+(1+condition|correct),data=subset(kids, condition!='Unstructured'), family=binomial)
+#model failed to converge so remove random slope
+m <- glmer(accuracy ~ condition + (1|id)+(1|correct),data=subset(kids, condition!='Unstructured'), family=binomial)
+summary(m)
+```
+
+Below are 95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+
+```{r}
+Anova(m,type="III")
+```
+
+##### Main logistic mixed-effects model with Massed condition as reference level
+
+```{r}
+kids$conditionMassed = ifelse(kids$condition=='Massed',0,1)
+m <- glmer(accuracy ~ conditionMassed + (1|id)+(1|correct),data=subset(kids, condition!='Unstructured'), family=binomial)
+summary(m)
+```
+
+Below are 95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+
+```{r}
+Anova(m,type="III")
+```
+
+##### One-sample t-test against chance - Interleaved condition
+
+```{r}
+t.test(filter(kids_subj, condition=='Interleaved')$accuracy, mu=0.5)
+```
+
+##### One-sample t-test against chance - Massed condition
+
+```{r}
+#Massed
+t.test(filter(kids_subj, condition=='Massed')$accuracy, mu=0.5)
+```
+
+
+#### Comparison of Massed, Interleaved, and Unstructured conditions
+
+##### Overall effect of condition across Exp 1 and Exp 2
+
+Model summary - Unstructured Condition is reference level.
+
+```{r}
+contrasts(kids$condition) <- varContrasts(kids$condition,Type="Dummy",RefLevel=3)
+m<- glmer(accuracy ~ condition + (1|id)+(1|correct),data=kids, family=binomial)
+summary(m)
+```
+
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+
+```{r}
+Anova(m,type="III")
+```
+
+##### Pairwise comparisons: Interleaved vs. Unstructured and Massed vs. Unstructured
+
+Model summary
+
+```{r}
+#  Interleaved vs. Unstructured and Massed vs. Unstructured
+kids$condition_Interleaved_v_Unstructured <- ifelse(kids$condition=="Interleaved",1,0)
+kids$condition_Massed_v_Unstructured <- ifelse(kids$condition=="Massed",1,0)
+m <- glmer(accuracy ~ condition_Interleaved_v_Unstructured + condition_Massed_v_Unstructured + (1|id)+(1|correct),data=kids, family=binomial)
+summary(m)
+```
+
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+
+```{r}
+Anova(m,type="III")
+```
+
+##### Pairwise comparisons: Unstructured vs. Interleaved and Massed vs. Interleaved
+
+Model summary
+
+```{r}
+# Massed vs. Interleaved and Unstructured vs. Interleaved
+kids$condition_Unstructured_v_Interleaved <- ifelse(kids$condition=="Unstructured",1,0)
+kids$condition_Massed_v_Interleaved <- ifelse(kids$condition=="Massed",1,0)
+m <- glmer(accuracy ~ condition_Unstructured_v_Interleaved + condition_Massed_v_Interleaved + (1|id)+(1|correct),data=kids, family=binomial)
+summary(m)
+```
+
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+
+```{r}
+Anova(m,type="III")
+```
+
+
+##### Experiment 1 vs. Experiment 2
+
+Model summary
+
+```{r, message=F}
+m <- glmer(accuracy ~ expLabels + (1|id)+(1|correct),data=kids, family=binomial)
+summary(m)
+```
+
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+```{r}
+Anova(m,type="III")
+```
+
+
+### Experiment 3 {.tabset}
+
+#### The effect of trial structure on adults’ test accuracy
+
+##### Main logistic mixed-effects model
+
+Model Summary
+
+```{r, warning=F, message=F}
+#Overall condition differences
+m <- glmer(accuracy ~ condition + (1|id)+(1+condition|correct),data=adults, family=binomial)
+#model failed to converge
+#remove by-condition random slope
+m <- glmer(accuracy ~ condition + (1|id)+(1|correct),data=adults, family=binomial)
+summary(m)
+```
+
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+```{r}
+Anova(m,type="III")
+```
+
+##### Pairwise condition comparisons: Dummy coding with Unstructured Condition as reference level
+
+Model Summary
+
+```{r}
+#testing individual contrasts (interleaved - unstructured and Massed - unstructured)
+#intercept is Unstructured vs. chance (0.5)
+#Specifying dummy codes explicitly to obtain p-values for pairwise comparisons
+adults$condition_Massed_v_Unstructured <- ifelse(adults$condition=="Massed",1,0)
+adults$condition_Interleaved_v_Unstructured <- ifelse(adults$condition=="Interleaved",1,0)
+m <- glmer(accuracy ~ condition_Massed_v_Unstructured + condition_Interleaved_v_Unstructured  + (1|id)+(1|correct),data=adults, family=binomial)
+summary(m)
+```
+
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+```{r}
+Anova(m,type="III")
+```
+
+##### Pairwise condition comparisons: Dummy coding with Massed Condition as reference level
+
+Model Summary
+
+``` {r}
+#testing individual contrasts and chance (interleaved - Massed and unstructured - Massed)
+#intercept is Massed vs. chance (0.5)
+#Specifying dummy codes explicitly to obtain p-values for pairwise comparisons
+adults$condition_Unstructured_v_Massed <- ifelse(adults$condition=="Unstructured",1,0)
+adults$condition_Interleaved_v_Massed <- ifelse(adults$condition=="Interleaved",1,0)
+m <- glmer(accuracy ~ condition_Unstructured_v_Massed + condition_Interleaved_v_Massed  + (1|id)+(1|correct),data=adults, family=binomial)
+summary(m)
+```
+
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+```{r}
+Anova(m,type="III")
+```
+
+##### Pairwise condition comparisons: Dummy coding with Interleaved Condition as reference level
+
+Model Summary
+
+```{r}
+#testing individual contrasts and chance (Massed - interleaved and unstructured - interleaved)
+#intercept is interleaved vs. chance (0.5)
+#Specifying dummy codes explicitly to obtain p-values for pairwise comparisons
+adults$condition_Unstructured_v_Interleaved <- ifelse(adults$condition=="Unstructured",1,0)
+adults$condition_Massed_v_Interleaved <- ifelse(adults$condition=="Massed",1,0)
+m <- glmer(accuracy ~ condition_Unstructured_v_Interleaved + condition_Massed_v_Interleaved  + (1|id)+(1|correct),data=adults, family=binomial)
+summary(m)
+```
+
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+```{r}
+Anova(m,type="III")
+```
+
+##### One-sample t-test: Unstructured Condition
+
+```{r}
+#by-condition means and 95% CIs
+t.test(adults_subj$accuracy[adults_subj$condition=="Unstructured"], mu=0.5)
+```
+
+##### One-sample t-test: Interleaved Condition
+
+```{r}
+#by-condition means and 95% CIs
+t.test(adults_subj$accuracy[adults_subj$condition=="Interleaved"], mu=0.5)
+```
+
+##### One-sample t-test: Massed Condition
+
+```{r}
+#by-condition means and 95% CIs
+t.test(adults_subj$accuracy[adults_subj$condition=="Massed"], mu=0.5)
+```
+
+#### Comparing the effect of trial structure for adults versus children
+
+##### Main Interaction Model
+
+Model summary
+
+```{r}
+#test interaction
+m <- glmer(accuracy ~ condition*group + (1|id)+(1+condition|correct),data=all_data, family=binomial)
+#model doesn't converge, simplified model:
+m <- glmer(accuracy ~ condition*group + (1|id)+(1|correct),data=all_data, family=binomial)
+summary(m)
+```
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+```{r}
+Anova(m,type="III")
+```
+
+##### Testing individual contrasts (interleaved - Massed and unstructured - Massed)
+
+Model Summary
+
+```{r}
+all_data$condition_Unstructured_v_Massed <- ifelse(all_data$condition=="Unstructured",1,0)
+all_data$condition_Interleaved_v_Massed <- ifelse(all_data$condition=="Interleaved",1,0)
+m <- glmer(accuracy ~ (condition_Unstructured_v_Massed+condition_Interleaved_v_Massed)*group + (1|id)+(1|correct),data=all_data, family=binomial)
+summary(m)
+```
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+```{r}
+Anova(m,type="III")
+```
+
+
+##### Testing individual contrasts (Interleaved - Unstructured and Massed - Unstructured)
+
+Model summary
+
+```{r}
+all_data$condition_Massed_v_Unstructured <- ifelse(all_data$condition=="Massed",1,0)
+all_data$condition_Interleaved_v_Unstructured <- ifelse(all_data$condition=="Interleaved",1,0)
+m <- glmer(accuracy ~ (condition_Massed_v_Unstructured +condition_Interleaved_v_Unstructured)*group + (1|id)+(1|correct),data=all_data, family=binomial)
+summary(m)
+```
+
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+```{r}
+Anova(m,type="III")
+```
+
+##### Testing individual contrasts (Massed - Interleaved and Unstructured - Interleaved)
+
+```{r}
+all_data$condition_Massed_v_Interleaved <- ifelse(all_data$condition=="Massed",1,0)
+all_data$condition_Unstructured_v_Interleaved <- ifelse(all_data$condition=="Unstructured",1,0)
+m <- glmer(accuracy ~ (condition_Massed_v_Interleaved +condition_Unstructured_v_Interleaved)*group + (1|id)+(1|correct),data=all_data, family=binomial)
+summary(m)
+```
+
+95% Wald confidence interval for model coefficients.
+```{r}
+confint(m, method="Wald")
+```
+
+Significance levels are assessed using a type III Wald chi-squared test.
+```{r}
+Anova(m,type="III")
+```
