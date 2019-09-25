@@ -123,7 +123,7 @@ adults_subj <-  adults %>%
 adults_demographics <-  adults_subj %>%
   group_by(group,condition) %>%
   summarize(N=n(),mean_age = mean(age), sd_age = sd(age), min_age = min(age), max_age = max(age),
-            count_female = length(which(gender=='F')), count_ole = length(which(ole=='Yes')),
+            count_female = length(which(gender=='F')), count_ole = length(which(ole=='yes')),
             count_nonNative = length(which(engNative=='No')))
 
 kable(adults_demographics)
@@ -318,7 +318,7 @@ summary(m)
 
 #### Accuracy in the Interleaved vs. Massed condition
 
-##### Main logistic mixed-effects model with Massed condition as reference level
+##### Main logistic mixed-effects model with Interleaved condition as reference level
 
 The model with the maximal random effects structure (by-item and by-subject random intercepts and by-item random slope for condition) did not converge, so we simplified the model by removing the by-item random slope for condition to achieve convergence.
 

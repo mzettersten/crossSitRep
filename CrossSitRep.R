@@ -89,7 +89,7 @@ adults_subj <-  adults %>%
 adults_demographics <-  adults_subj %>%
   group_by(group,condition) %>%
   summarize(N=n(),mean_age = mean(age), sd_age = sd(age), min_age = min(age), max_age = max(age),
-            count_female = length(which(gender=='F')), count_ole = length(which(ole=='Yes')),
+            count_female = length(which(gender=='F')), count_ole = length(which(ole=='yes')),
             count_nonNative = length(which(engNative=='No')))
 
 #summarize accuracy
@@ -211,7 +211,7 @@ m <- lm(accuracy~age*condition, data=subset(kids_subj, condition!='Unstructured'
 summary(m)
 
 #### Accuracy in the Interleaved vs. Massed condition
-#effect of condition, Massed is reference 
+#effect of condition, Interleaved is reference 
 m <- glmer(accuracy ~ condition + (1|id)+(1+condition|correct),data=subset(kids, condition!='Unstructured'), family=binomial)
 #model failed to converge so remove random slope
 #effect of condition, Interleaved is reference, intercept = Interleaved vs. chance
