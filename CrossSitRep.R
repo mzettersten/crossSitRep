@@ -118,9 +118,9 @@ p1 <- ggplot(kids_summarized,aes(condition,mean_accuracy, color=condition,fill=c
                      labels=c("Unstructured \n Exp1","Interleaved \n Exp2", "Massed \n Exp2"),
                      palette="Set1",direction=-1)+
   theme(legend.position="none",
-        axis.text  = element_text(size=18),
-        axis.title = element_text(size=20),
-        plot.title = element_text(size=24, hjust=0.5))+
+        axis.text  = element_text(size=20),
+        axis.title = element_text(size=24),
+        plot.title = element_text(size=26, hjust=0.5))+
   ggtitle("Children")
 
 #plot adult data
@@ -142,13 +142,14 @@ p2 <- ggplot(adults_summarized,aes(condition,mean_accuracy, color=condition,fill
                      labels=c("Unstructured \n Exp3","Interleaved \n Exp3", "Massed \n Exp3"),
                      palette="Set1",direction=-1)+
   theme(legend.position="none",
-        axis.text  = element_text(size=18),
-        axis.title = element_text(size=20),
-        plot.title = element_text(size=24, hjust=0.5))+
+        axis.text  = element_text(size=20),
+        axis.title = element_text(size=24),
+        plot.title = element_text(size=26, hjust=0.5))+
   ggtitle("Adults")
 
-plot_grid(p1,p2,labels=c("A","B"), label_size=20)
+plot_grid(p1,p2,labels=c("A","B"), label_size=24)
 #ggsave("allData_mean_accuracy_final.jpg",path="plots/",device="jpg")
+ggsave("allData_mean_accuracy_final.tiff",path="plots/",device="tiff", width=15, height=9, dpi=300)
 
 #### plot age and accuracy relationship - child data####
 kids_subj$conditionName=factor(kids_subj$condition,levels=c('Unstructured','Interleaved','Massed'),labels=c("Unstructured\nExp 1","Interleaved\nExp 2","Massed\nExp 2"))
@@ -168,6 +169,7 @@ ggplot(kids_subj,aes(age, accuracy,group=conditionName, color=conditionName))+
   xlab("Age (in years)")+
   ylab("Mean Accuracy")
 #ggsave("children_age_accuracy.jpg",path="plots/",device="jpg")
+#ggsave("children_age_accuracy.tiff",path="plots/",device="tiff", width=8, height=5.5)
 
 ####analysis - exp 1####
 
