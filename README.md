@@ -28,7 +28,7 @@ https://mzettersten.github.io/crossSitRep/analysis/CrossSitRep.html
 
 This folder contains data files and the codebook:
 
-- **CrossSitRep_allData.csv**: The complete experimental data set\
+- **CrossSitRep_allData.csv**: The complete experimental dataset
 
 - **CrossSitRep_codebook.txt**: A codebook for the experimental dataset
 
