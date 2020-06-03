@@ -24,10 +24,10 @@ library(car) # version 3.0-3
 library(sciplot) # version 1.1-1
 library(lmSupport) # version 2.9.13
 library(knitr) # version 1.24
-
+library(here) #version 0.1
 ```
 
-Analysis walkthrough for the paper "The temporal structure of naming events differentially affects children’s and adults’ cross-situational word learning" (Benitez, Zettersten & Wojcik, 2019).
+Analysis walkthrough for the paper "The temporal structure of naming events differentially affects children’s and adults’ cross-situational word learning" (Benitez, Zettersten & Wojcik, 2020).
 
 See CrossSitRep_codebook for information about individual columns.
 
@@ -35,7 +35,7 @@ See CrossSitRep_codebook for information about individual columns.
 
 ```{r, message=F, warning=F}
 #### read in complete data set ####
-all_data <- read.csv("CrossSitRep_allData.csv")
+all_data <- read.csv(here("data","CrossSitRep_allData.csv"))
 
 #analyze just test trials
 all_data <- filter(all_data,trial_type=="test")
