@@ -14,12 +14,13 @@ library(car) # version 3.0-3
 library(sciplot) # version 1.1-1
 library(lmSupport) # version 2.9.13
 library(knitr) # version 1.24
+library(here) #version 0.1
 
 #Clear workspace
 rm (list = ls (all=TRUE))
 
 #### Load data ####
-all_data <- read.csv("CrossSitRep_allData.csv")
+all_data <- read.csv(here("data","CrossSitRep_allData.csv"))
 
 #analyze just test trials
 all_data <- filter(all_data,trial_type=="test")
@@ -148,8 +149,8 @@ p2 <- ggplot(adults_summarized,aes(condition,mean_accuracy, color=condition,fill
   ggtitle("Adults")
 
 plot_grid(p1,p2,labels=c("A","B"), label_size=24)
-#ggsave("allData_mean_accuracy_final.jpg",path="plots/",device="jpg")
-ggsave("allData_mean_accuracy_final.tiff",path="plots/",device="tiff", width=15, height=9, dpi=300)
+ggsave("allData_mean_accuracy_final.jpg",path=here("plots"),device="jpg", width=15, height=9, dpi=300)
+#ggsave("allData_mean_accuracy_final.tiff",path=here("plots"),device="tiff", width=15, height=9, dpi=300)
 
 #### plot age and accuracy relationship - child data####
 kids_subj$conditionName=factor(kids_subj$condition,levels=c('Unstructured','Interleaved','Massed'),labels=c("Unstructured\nExp 1","Interleaved\nExp 2","Massed\nExp 2"))
@@ -168,8 +169,8 @@ ggplot(kids_subj,aes(age, accuracy,group=conditionName, color=conditionName))+
   facet_wrap(~conditionName)+
   xlab("Age (in years)")+
   ylab("Mean Accuracy")
-#ggsave("children_age_accuracy.jpg",path="plots/",device="jpg")
-#ggsave("children_age_accuracy.tiff",path="plots/",device="tiff", width=8, height=5.5)
+ggsave("children_age_accuracy.jpg",path=here("plots"),device="jpg", width=8, height=5.5)
+#ggsave("children_age_accuracy.tiff",path=here("plots"),device="tiff", width=8, height=5.5)
 
 ####analysis - exp 1####
 
