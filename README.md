@@ -16,6 +16,12 @@ Experiment 2: https://osf.io/g2md4
 
 Experiment 3: https://osf.io/84trw
 
+## Analysis Walkthrough
+
+Here is a direct link to the html rendering of the R Markdown file in the analysis folder. This provides a walkthrough of the major analyses in the paper.
+
+https://mzettersten.github.io/crossSitRep/analysis/CrossSitRep.html
+
 ## Contents
 
 ### data
