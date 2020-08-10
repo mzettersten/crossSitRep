@@ -1,12 +1,14 @@
 # crossSitRep
 
-Data and analysis for the paper "The temporal structure of naming events differentially affects children’s and adults’ cross-situational word learning" (Benitez, Zettersten & Wojcik).
+Data and analysis for the paper:
+
+Benitez, V., Zettersten, M., & Wojcik, E. (accepted). The temporal structure of naming events differentially affects children’s and adults’ statistical word-referent learning. Journal of Experimental Child Psychology.
 
 ## Abstract
 
 To acquire novel words, learners often have to integrate information about word meanings across ambiguous learning events distributed in time. How does the temporal structure of those word learning events affect what learners encode? How do the effects of temporal structure differ in children and adults? In the present studies, we asked how 4- to 7-year-old children’s (N=110) and adult’s (N=90) performance on a cross-situational word learning task is influenced by the temporal distribution of learning events. We tested participants in three training conditions, manipulating the number of trials that separated naming events for specific objects. In the Unstructured condition, the temporal distribution was varied; in the Massed condition, naming events occurred with few interleaved trials; and in the Interleaved condition, naming events occurred with many interleaved trials. Adults showed substantially larger benefits from the Massed condition than children, while children were equally successful at learning in the Massed and Interleaved conditions. These results provide evidence that adults differ from children in how they exploit temporal structure during cross-situational word learning.
 
-## Link to OSF project (not yet public for reviewing purposes):
+## Link to OSF project:
 
 https://osf.io/2hmxr/
 
