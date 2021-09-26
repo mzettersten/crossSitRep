@@ -2,7 +2,7 @@
 
 Data and analysis for the paper:
 
-Benitez, V., Zettersten, M., & Wojcik, E. (accepted). The temporal structure of naming events differentially affects children’s and adults’ statistical word-referent learning. Journal of Experimental Child Psychology.
+Benitez, V., Zettersten, M., & Wojcik, E. (2020). The temporal structure of naming events differentially affects children’s and adults’ statistical word-referent learning. Journal of Experimental Child Psychology, 200, 104961. https://doi.org/10.1016/j.jecp.2020.104961
 
 ## Abstract
 
